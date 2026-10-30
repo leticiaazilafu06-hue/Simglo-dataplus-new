@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090909">
+  <title>Admin | Simglo Dataplus</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/"><span>SIMGLO</span> DATAPLUS</a><span class="muted">Admin dashboard</span></header>
+  <main>
+    <section class="section admin-wrap">
+      <p class="eyebrow">ADMIN TOOLS</p>
+      <h1 class="admin-title">Agent <span>SMS invitations</span></h1>
+      <p class="intro">Invite people who have agreed to hear from Simglo Dataplus to register as agents.</p>
+      <section class="admin-panel">
+        <h2>Admin access</h2>
+        <p class="muted">Enter the private admin token saved in your Render environment variables. It is not your Paystack or supplier key.</p>
+        <label for="admin-token">Admin API token</label>
+        <input id="admin-token" type="password" autocomplete="off" placeholder="Paste your ADMIN_API_TOKEN">
+        <button id="save-token" class="outline-btn" type="button">Save on this device</button>
+      </section>
+      <section class="admin-panel">
+        <div class="section-heading"><h2>SMS usage and spending</h2><button id="refresh-stats" class="outline-btn" type="button">Refresh figures</button></div>
+        <div class="stats-grid">
+          <div class="stat-card"><span>Total invitations</span><strong id="stat-total">—</strong></div>
+          <div class="stat-card"><span>Submitted this month</span><strong id="stat-month">—</strong></div>
+          <div class="stat-card"><span>Failed submissions</span><strong id="stat-failed">—</strong></div>
+          <div class="stat-card"><span>Estimated SMS spend</span><strong id="stat-spend">GH₵0.00</strong></div>
+        </div>
+        <p id="stats-note" class="muted small-note">Enter your admin token and refresh to load usage. Estimated spend is a planning figure, not your live Hubtel balance.</p>
+        <div class="balance-row">
+          <div><strong>Hubtel remaining SMS credit</strong><p class="muted">Your live prepaid balance is not available through this website connection. Open Hubtel to check the actual remaining credit and top up when needed.</p></div>
+          <a class="outline-btn" href="https://unity.hubtel.com/" target="_blank" rel="noopener noreferrer">Open Hubtel</a>
+        </div>
+      </section>
+      <section class="admin-panel" id="sales-reports">
+        <div class="section-heading"><h2>Business sales reports</h2><button id="refresh-sales" class="outline-btn" type="button">Refresh sales</button></div>
+        <p class="muted">View successful sales and estimated gross profit for the whole business. Only paid and delivered orders are counted.</p>
+        <div class="stats-grid">
+          <div class="stat-card"><span>Weekly sales</span><strong id="sales-week">—</strong><small id="orders-week" class="muted">Orders: —</small></div>
+          <div class="stat-card"><span>Weekly profit</span><strong id="profit-week">—</strong></div>
+          <div class="stat-card"><span>Monthly sales</span><strong id="sales-month">—</strong><small id="orders-month" class="muted">Orders: —</small></div>
+          <div class="stat-card"><span>Monthly profit</span><strong id="profit-month">—</strong></div>
+          <div class="stat-card"><span>Yearly sales</span><strong id="sales-year">—</strong><small id="orders-year" class="muted">Orders: —</small></div>
+          <div class="stat-card"><span>Yearly profit</span><strong id="profit-year">—</strong></div>
+        </div>
+        <p id="sales-note" class="muted small-note">Enter your admin token and refresh. Figures will remain empty until the orders table contains real successful orders.</p>
+      </section>
+      <section class="admin-panel">
+        <h2>Agent sales reports</h2>
+        <p class="muted">Each agent will have a separate report page showing only their own weekly, monthly and yearly sales and profit. The page is prepared at <a href="/agent.html" style="color:#ff737d;text-decoration:underline">/agent.html</a>. Secure agent login and order attribution still need to be completed before personal reports can be enabled.</p>
+      </section>
+      <section class="admin-panel">
+        <h2>Send an agent invitation</h2>
+        <form id="invite-form">
+          <label for="phone">Recipient's Ghana phone number</label>
+          <input id="phone" name="phone" inputmode="tel" placeholder="0241234567" required>
+          <label class="consent-row"><input id="consent" type="checkbox" required> The recipient has agreed to receive this invitation.</label>
+          <button class="primary-btn" type="submit">Send invitation</button>
+        </form>
+        <p id="sms-status" class="muted" role="status" aria-live="polite"></p>
+      </section>
+      <section class="admin-panel">
+        <div class="section-heading"><h2>Recent invitations</h2><button id="refresh-logs" class="outline-btn" type="button">Refresh</button></div>
+        <div id="sms-logs" class="logs-list"><p class="muted">Enter your admin token and refresh to view history.</p></div>
+      </section>
+      <p class="muted small-note">SMS sender names must be approved by Hubtel and mobile networks. “Submitted” means Hubtel accepted the request, not that the recipient's phone received it. The dashboard estimates spend where Hubtel does not return itemised billing details. It does not guess your remaining balance; check Hubtel for actual credit and final charges.</p>
+    </section>
+  </main>
+  <script src="/admin.js"></script>
+</body>
+</html>

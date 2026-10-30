@@ -8,7 +8,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: process.env.PUBLIC_BASE_URL || true }));
 app.use(express.json({ limit: "20kb" }));
-app.use(express.static("public"));
+app.use(express.static("."));
 
 const pool = process.env.DATABASE_URL
   ? new Pool({

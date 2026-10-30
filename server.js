@@ -234,14 +234,162 @@ app.get("/api/admin/sms/logs", requireAdmin, async (_req, res) => {
   }
 });
 
-// Supplier data is never invented. Implement the provider adapter only after
-// the chosen supplier's real API documentation and credentials are supplied.
-app.post("/api/admin/supplier/fetch", requireAdmin, (_req, res) => {
-  if (!process.env.SUPPLIER_BASE_URL || !process.env.SUPPLIER_API_KEY) {
-    return res.status(503).json({ error: "Supplier API is not configured. Add the real supplier credentials first." });
+
+function supplierConfig() {
+  const base = (process.env.SUPPLIER_BASE_URL || "https://buydata.space/api/v1").replace(/\/$/, "");
+  const key = process.env.SUPPLIER_API_KEY;
+  if (!key) return { error: "NetPulse API key is missing. Check Render Environment." };
+  if (base !== "https://buydata.space/api/v1") {
+    return { error: "Please set SUPPLIER_BASE_URL to https://buydata.space/api/v1." };
   }
-  res.status(501).json({ error: "Supplier credentials are present, but the provider-specific fetch adapter has not been implemented." });
+  return { base, key };
+}
+
+app.get("/api/admin/supplier/test", requireAdmin, async (_req, res) => {
+  const config = supplierConfig();
+  if (config.error) return res.status(503).json({ error: config.error });
+
+  try {
+    const response = await fetch(config.base + "/ping", {
+      headers: { "x-api-key": config.key },
+      signal: AbortSignal.timeout(15000)
+    });
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok || body.ok !== true) {
+      return res.status(502).json({
+        error: body.error || "NetPulse connection failed. Check your API key."
+      });
+    }
+
+    res.json({ ok: true, message: "Connected to NetPulse successfully." });
+  } catch (_error) {
+    res.status(502).json({ error: "Could not reach NetPulse. Try again later." });
+  }
 });
+
+app.post("/api/admin/supplier/fetch", requireAdmin, async (_req, res) => {
+  if (!requireDatabase(res)) return;
+  const config = supplierConfig();
+  if (config.error) return res.status(503).json({ error: config.error });
+
+  try {
+    const response = await fetch(config.base + "/packages", {
+      headers: { "x-api-key": config.key },
+      signal: AbortSignal.timeout(20000)
+    });
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok || !Array.isArray(body.packages)) {
+      return res.status(502).json({
+        error: body.error || "NetPulse did not return a valid package list."
+      });
+    }
+
+    const client = await pool.connect();
+    let added = 0, updated = 0, skipped = 0;
+
+    try {
+      await client.query("BEGIN");
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS bundles_network_data_amount_uidx
+        ON bundles (network, data_amount)
+      `);
+
+      for (const item of body.packages) {
+        const rawNetwork = String(item.network || "").trim().toLowerCase();
+        const network = rawNetwork === "mtn" ? "MTN"
+          : rawNetwork === "telecel" ? "Telecel"
+          : ["airteltigo", "at", "airtel tigo"].includes(rawNetwork) ? "AT"
+          : null;
+
+        const capacity = String(item.capacity || "").trim();
+        const supplierPrice = Number(item.price);
+
+        if (!network || !capacity || !Number.isFinite(supplierPrice) || supplierPrice < 0) {
+          skipped++;
+          continue;
+        }
+
+        const name = String(item.name || `${network} ${capacity} Bundle`).slice(0, 100);
+
+        const result = await client.query(`
+          INSERT INTO bundles
+            (network, name, data_amount, supplier_price, selling_price, active, sort_order)
+          VALUES ($1, $2, $3, $4, 0, FALSE, 0)
+          ON CONFLICT (network, data_amount)
+          DO UPDATE SET
+            name = EXCLUDED.name,
+            supplier_price = EXCLUDED.supplier_price,
+            updated_at = NOW()
+          RETURNING (xmax = 0) AS inserted
+        `, [network, name, capacity, supplierPrice]);
+
+        if (result.rows[0].inserted) added++;
+        else updated++;
+      }
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    res.json({
+      ok: true, added, updated, skipped,
+      message: `Fetched ${added + updated} packages. Set your prices below.`
+    });
+  } catch (_error) {
+    res.status(500).json({
+      error: "Fetching failed. Check your NetPulse key and database."
+    });
+  }
+});
+
+app.get("/api/admin/bundles", requireAdmin, async (_req, res) => {
+  if (!requireDatabase(res)) return;
+  try {
+    const result = await pool.query(`
+      SELECT id, network, name, data_amount, supplier_price, selling_price, active
+      FROM bundles ORDER BY network, sort_order, data_amount
+    `);
+    res.json({ bundles: result.rows });
+  } catch (_error) {
+    res.status(500).json({ error: "Could not load bundles." });
+  }
+});
+
+app.put("/api/admin/bundles/:id", requireAdmin, async (req, res) => {
+  if (!requireDatabase(res)) return;
+
+  const price = Number(req.body.selling_price);
+  const active = req.body.active === true;
+
+  if (!Number.isFinite(price) || price < 0 || (active && price <= 0)) {
+    return res.status(400).json({
+      error: "Enter a selling price greater than zero before activating a bundle."
+    });
+  }
+
+  try {
+    const result = await pool.query(`
+      UPDATE bundles
+      SET selling_price = $1, active = $2, updated_at = NOW()
+      WHERE id = $3 RETURNING id
+    `, [price, active, req.params.id]);
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Bundle not found." });
+    }
+
+    res.json({ ok: true, message: "Bundle settings saved." });
+  } catch (_error) {
+    res.status(500).json({ error: "Could not save bundle settings." });
+  }
+});
+
 
 app.get("/api/admin/settings/public", async (_req, res) => {
   if (!requireDatabase(res)) return;

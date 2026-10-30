@@ -122,3 +122,147 @@ async function loadSalesReports() {
   } catch (error) { note.textContent = error.message; }
 }
 document.getElementById("refresh-sales")?.addEventListener("click", loadSalesReports);
+
+const supplierStatus = document.getElementById("supplier-status");
+const bundleList = document.getElementById("bundle-list");
+
+function supplierMessage(message, isError = false) {
+  supplierStatus.textContent = message;
+  supplierStatus.classList.toggle("error-text", isError);
+  supplierStatus.classList.toggle("success-text", !isError);
+}
+
+async function supplierRequest(url, options = {}) {
+  if (!getToken()) throw new Error("Enter your admin token first.");
+
+  const response = await fetch(url, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) }
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Request failed.");
+  return result;
+}
+
+document.getElementById("test-supplier").addEventListener("click", async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  supplierMessage("Testing NetPulse connection...");
+
+  try {
+    const result = await supplierRequest("/api/admin/supplier/test");
+    supplierMessage(result.message);
+  } catch (error) {
+    supplierMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("fetch-bundles").addEventListener("click", async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  supplierMessage("Fetching packages from NetPulse...");
+
+  try {
+    const result = await supplierRequest("/api/admin/supplier/fetch", {
+      method: "POST",
+      body: "{}"
+    });
+
+    supplierMessage(
+      `${result.message} Added: ${result.added}; updated: ${result.updated}; skipped: ${result.skipped}.`
+    );
+
+    await loadBundleSettings();
+  } catch (error) {
+    supplierMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function makeBundleRow(bundle) {
+  const row = document.createElement("div");
+  row.className = "log-row";
+
+  const info = document.createElement("div");
+  info.style.flex = "1 1 160px";
+
+  const title = document.createElement("strong");
+  title.textContent = `${bundle.network} · ${bundle.data_amount}`;
+
+  const cost = document.createElement("p");
+  cost.className = "muted";
+  cost.textContent = `Supplier cost: GH₵${Number(bundle.supplier_price).toFixed(2)}`;
+
+  info.append(title, cost);
+
+  const price = document.createElement("input");
+  price.type = "number";
+  price.min = "0";
+  price.step = "0.01";
+  price.value = Number(bundle.selling_price || 0).toFixed(2);
+  price.style.width = "115px";
+  price.setAttribute("aria-label", "Your selling price");
+
+  const activeLabel = document.createElement("label");
+  const active = document.createElement("input");
+  active.type = "checkbox";
+  active.checked = bundle.active === true;
+  activeLabel.append(active, document.createTextNode(" Active"));
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = "outline-btn";
+  save.textContent = "Save";
+
+  save.addEventListener("click", async () => {
+    save.disabled = true;
+    try {
+      await supplierRequest(
+        `/api/admin/bundles/${encodeURIComponent(bundle.id)}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            selling_price: price.value,
+            active: active.checked
+          })
+        }
+      );
+      supplierMessage(`Saved ${bundle.network} ${bundle.data_amount}.`);
+    } catch (error) {
+      supplierMessage(error.message, true);
+    } finally {
+      save.disabled = false;
+    }
+  });
+
+  row.append(info, price, activeLabel, save);
+  return row;
+}
+
+async function loadBundleSettings() {
+  bundleList.textContent = "Loading bundles...";
+
+  try {
+    const result = await supplierRequest("/api/admin/bundles");
+    bundleList.replaceChildren();
+
+    if (!result.bundles.length) {
+      bundleList.textContent = "No bundles yet. Use Fetch data bundles.";
+      return;
+    }
+
+    result.bundles.forEach(bundle => {
+      bundleList.append(makeBundleRow(bundle));
+    });
+  } catch (error) {
+    bundleList.textContent = error.message;
+  }
+}
+
+document.getElementById("refresh-bundles")
+  .addEventListener("click", loadBundleSettings);
+

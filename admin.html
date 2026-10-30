@@ -20,7 +20,40 @@
         <label for="admin-token">Admin API token</label>
         <input id="admin-token" type="password" autocomplete="off" placeholder="Paste your ADMIN_API_TOKEN">
         <button id="save-token" class="outline-btn" type="button">Save on this device</button>
-      </section>
+      </section> 
+      
+<section class="admin-panel" id="bundle-management">
+  <h2>Data bundle management</h2>
+  <p class="muted">
+    Test NetPulse, fetch its packages, then set your own selling prices.
+    Newly fetched bundles remain inactive until you approve them.
+  </p>
+
+  <div class="section-heading">
+    <button id="test-supplier" class="outline-btn" type="button">
+      Test NetPulse connection
+    </button>
+    <button id="fetch-bundles" class="primary-btn" type="button">
+      Fetch data bundles
+    </button>
+  </div>
+
+  <p id="supplier-status" class="muted" role="status" aria-live="polite">
+    Enter and save your admin token before using these buttons.
+  </p>
+
+  <div class="section-heading">
+    <h2>Available bundles and prices</h2>
+    <button id="refresh-bundles" class="outline-btn" type="button">
+      Refresh list
+    </button>
+  </div>
+
+  <div id="bundle-list" class="logs-list">
+    <p class="muted">No bundles loaded yet.</p>
+  </div>
+</section>
+
       <section class="admin-panel">
         <div class="section-heading"><h2>SMS usage and spending</h2><button id="refresh-stats" class="outline-btn" type="button">Refresh figures</button></div>
         <div class="stats-grid">

@@ -341,11 +341,12 @@ app.post("/api/admin/supplier/fetch", requireAdmin, async (_req, res) => {
       ok: true, added, updated, skipped,
       message: `Fetched ${added + updated} packages. Set your prices below.`
     });
-  } catch (_error) {
-    res.status(500).json({
-      error: "Fetching failed. Check your NetPulse key and database."
-    });
-  }
+} catch (_error) {
+  console.error("Supplier bundle fetch error:", _error);
+  res.status(500).json({
+    error: "Fetching failed. Check Render logs for details."
+  });
+}
 });
 
 app.get("/api/admin/bundles", requireAdmin, async (_req, res) => {

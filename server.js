@@ -400,7 +400,6 @@ if (
     error: "Enter a valid customer price and a non-negative agent price."
   });
 }
-  }
 
   try {
   const result = await pool.query(`

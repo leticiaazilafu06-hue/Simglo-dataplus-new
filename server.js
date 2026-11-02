@@ -292,6 +292,20 @@ app.post("/api/admin/supplier/fetch", requireAdmin, async (_req, res) => {
     try {
       await client.query("BEGIN");
       await client.query(`
+  CREATE TABLE IF NOT EXISTS bundles (
+    id BIGSERIAL PRIMARY KEY,
+    network VARCHAR(20) NOT NULL CHECK (network IN ('MTN','Telecel','AT')),
+    name VARCHAR(100) NOT NULL,
+    data_amount VARCHAR(50) NOT NULL,
+    supplier_price NUMERIC(12,2),
+    selling_price NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (selling_price >= 0),
+    active BOOLEAN NOT NULL DEFAULT FALSE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`);
+      await client.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS bundles_network_data_amount_uidx
         ON bundles (network, data_amount)
       `);

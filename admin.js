@@ -199,13 +199,33 @@ function makeBundleRow(bundle) {
 
   info.append(title, cost);
 
+  const customerGroup = document.createElement("div");
+  const customerLabel = document.createElement("label");
+  customerLabel.textContent = "Customer price (GH₵)";
+
   const price = document.createElement("input");
   price.type = "number";
   price.min = "0";
   price.step = "0.01";
   price.value = Number(bundle.selling_price || 0).toFixed(2);
   price.style.width = "115px";
-  price.setAttribute("aria-label", "Your selling price");
+  price.setAttribute("aria-label", "Customer price");
+
+  customerGroup.append(customerLabel, price);
+
+  const agentGroup = document.createElement("div");
+  const agentLabel = document.createElement("label");
+  agentLabel.textContent = "Agent price (GH₵)";
+
+  const agentPrice = document.createElement("input");
+  agentPrice.type = "number";
+  agentPrice.min = "0";
+  agentPrice.step = "0.01";
+  agentPrice.value = Number(bundle.agent_price || 0).toFixed(2);
+  agentPrice.style.width = "115px";
+  agentPrice.setAttribute("aria-label", "Agent price");
+
+  agentGroup.append(agentLabel, agentPrice);
 
   const activeLabel = document.createElement("label");
   const active = document.createElement("input");
@@ -227,6 +247,7 @@ function makeBundleRow(bundle) {
           method: "PUT",
           body: JSON.stringify({
             selling_price: price.value,
+            agent_price: agentPrice.value,
             active: active.checked
           })
         }
@@ -239,7 +260,7 @@ function makeBundleRow(bundle) {
     }
   });
 
-  row.append(info, price, activeLabel, save);
+  row.append(info, customerGroup, agentGroup, activeLabel, save);
   return row;
 }
 

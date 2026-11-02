@@ -299,6 +299,7 @@ app.post("/api/admin/supplier/fetch", requireAdmin, async (_req, res) => {
     data_amount VARCHAR(50) NOT NULL,
     supplier_price NUMERIC(12,2),
     selling_price NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (selling_price >= 0),
+    agent_price NUMERIC(12,2) NOT NULL DEFAULT 0,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -306,6 +307,10 @@ app.post("/api/admin/supplier/fetch", requireAdmin, async (_req, res) => {
   )
 `);
       await client.query(`
+      await client.query(`
+  ALTER TABLE bundles
+  ADD COLUMN IF NOT EXISTS agent_price NUMERIC(12,2) NOT NULL DEFAULT 0
+`);
         CREATE UNIQUE INDEX IF NOT EXISTS bundles_network_data_amount_uidx
         ON bundles (network, data_amount)
       `);

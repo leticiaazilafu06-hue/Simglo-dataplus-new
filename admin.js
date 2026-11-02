@@ -96,7 +96,8 @@ document.getElementById("refresh-logs").addEventListener("click", async () => {
 });
 
 if (savedToken) {
-  Promise.all([loadLogs(), loadStats()]).catch(error => showStatus(error.message, true));
+  Promise.all([loadLogs(), loadStats(), loadSalesReports()])
+    .catch(error => showStatus(error.message, true));
 }
 
 

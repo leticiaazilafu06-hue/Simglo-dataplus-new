@@ -33,7 +33,7 @@ document.getElementById("invite-form").addEventListener("submit", async event =>
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not send invitation.");
     showStatus(result.message || "Invitation submitted.");
-    event.currentTarget.reset();
+    form.reset();
     await Promise.all([loadLogs(), loadStats()]);
   } catch (error) { showStatus(error.message, true); }
   finally { button.disabled = false; }

@@ -402,12 +402,11 @@ if (
   }
 
   try {
-    const result = await pool.query(`
-      UPDATE bundles
-      SET selling_price = $1, active = $2, updated_at = NOW()
-      WHERE id = $3 RETURNING id
-    `, [price, active, req.params.id]);
-
+  const result = await pool.query(`
+    UPDATE bundles
+    SET selling_price = $1, agent_price = $2, active = $3, updated_at = NOW()
+    WHERE id = $4 RETURNING id
+  `, [price, agentPrice, active, req.params.id]);
     if (!result.rowCount) {
       return res.status(404).json({ error: "Bundle not found." });
     }

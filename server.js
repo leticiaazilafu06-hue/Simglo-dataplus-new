@@ -372,7 +372,7 @@ app.get("/api/admin/bundles", requireAdmin, async (_req, res) => {
   if (!requireDatabase(res)) return;
   try {
     const result = await pool.query(`
-      SELECT id, network, name, data_amount, supplier_price, selling_price, active
+       SELECT id, network, name, data_amount, supplier_price, selling_price, agent_price, active
       FROM bundles ORDER BY network, sort_order, data_amount
     `);
     res.json({ bundles: result.rows });

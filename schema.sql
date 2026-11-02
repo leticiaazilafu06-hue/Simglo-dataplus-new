@@ -5,11 +5,15 @@ CREATE TABLE IF NOT EXISTS bundles (
   data_amount VARCHAR(50) NOT NULL,
   supplier_price NUMERIC(12,2),
   selling_price NUMERIC(12,2) NOT NULL CHECK (selling_price >= 0),
+  
+  agent_price NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (agent_price >= 0),
+
   active BOOLEAN NOT NULL DEFAULT FALSE,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE bundles ADD COLUMN IF NOT EXISTS agent_price NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (agent_price >= 0);
 
 CREATE TABLE IF NOT EXISTS site_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),

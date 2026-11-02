@@ -385,12 +385,20 @@ app.put("/api/admin/bundles/:id", requireAdmin, async (req, res) => {
   if (!requireDatabase(res)) return;
 
   const price = Number(req.body.selling_price);
-  const active = req.body.active === true;
+const agentPrice = Number(req.body.agent_price);
+const active = req.body.active === true;
 
-  if (!Number.isFinite(price) || price < 0 || (active && price <= 0)) {
-    return res.status(400).json({
-      error: "Enter a selling price greater than zero before activating a bundle."
-    });
+if (
+  !Number.isFinite(price) ||
+  price < 0 ||
+  (active && price <= 0) ||
+  !Number.isFinite(agentPrice) ||
+  agentPrice < 0
+) {
+  return res.status(400).json({
+    error: "Enter a valid customer price and a non-negative agent price."
+  });
+}
   }
 
   try {

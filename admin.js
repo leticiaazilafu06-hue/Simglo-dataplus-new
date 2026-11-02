@@ -20,7 +20,8 @@ document.getElementById("save-token").addEventListener("click", () => {
 });
 
 document.getElementById("invite-form").addEventListener("submit", async event => {
-  event.preventDefault();:const form = event.currentTarget;
+  event.preventDefault();
+  const form = event.currentTarget;
   if (!getToken()) return showStatus("Enter your admin token first.", true);
   const button = form.querySelector("button[type=submit]");
   button.disabled = true;
